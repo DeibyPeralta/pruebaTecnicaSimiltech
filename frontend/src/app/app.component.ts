@@ -7,12 +7,12 @@ import {
   ApiError,
   DashboardData,
   DashboardRevenueByType,
-  DashboardTimeRange,
   DashboardView,
   ParkingRecord,
   VehicleType
 } from './models/parking.models';
 import { ParkingService } from './services/parking.service';
+import { formatMinutes, formatMoney, normalizePlate, toDateTimeLocal } from './utils/formatters';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +22,8 @@ import { ParkingService } from './services/parking.service';
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
+  readonly formatMoney = formatMoney;
+  readonly formatMinutes = formatMinutes;
   readonly vehicleTypes: VehicleType[] = ['Carro', 'Moto'];
   readonly menu: { id: DashboardView; label: string; marker: string }[] = [
     { id: 'dashboard', label: 'Dashboard', marker: 'D' },
@@ -92,7 +94,7 @@ export class AppComponent implements OnInit {
     const value = this.entryForm.getRawValue();
     const request = {
       vehicleType: value.vehicleType,
-      plate: this.normalizePlate(value.plate),
+      plate: normalizePlate(value.plate),
       ...(value.entryDateTime ? { entryDateTime: new Date(value.entryDateTime).toISOString() } : {})
     };
 
@@ -109,7 +111,7 @@ export class AppComponent implements OnInit {
   }
 
   registerExit(plate?: string): void {
-    const selectedPlate = this.normalizePlate(plate || this.exitForm.getRawValue().plate);
+    const selectedPlate = normalizePlate(plate || this.exitForm.getRawValue().plate);
     if (!selectedPlate) {
       this.exitForm.markAllAsTouched();
       return;
@@ -134,7 +136,7 @@ export class AppComponent implements OnInit {
   openExitModal(plate?: string): void {
     this.clearMessages();
     if (plate) {
-      this.exitForm.reset({ plate: this.normalizePlate(plate) });
+      this.exitForm.reset({ plate: normalizePlate(plate) });
     }
     this.showExitModal = true;
   }
@@ -152,7 +154,7 @@ export class AppComponent implements OnInit {
     this.editForm.reset({
       vehicleType: record.vehicleType,
       plate: record.plate,
-      entryDateTime: this.toDateTimeLocal(record.entryDateTime)
+      entryDateTime: toDateTimeLocal(record.entryDateTime)
     });
   }
 
@@ -176,7 +178,7 @@ export class AppComponent implements OnInit {
     const value = this.editForm.getRawValue();
     const request = {
       vehicleType: value.vehicleType,
-      plate: this.normalizePlate(value.plate),
+      plate: normalizePlate(value.plate),
       entryDateTime: new Date(value.entryDateTime).toISOString()
     };
 
@@ -223,17 +225,6 @@ export class AppComponent implements OnInit {
     this.activeView = 'dashboard';
   }
 
-  formatMoney(value?: number | null): string {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value || 0);
-  }
-
-  formatMinutes(value?: number | null): string {
-    const minutes = value || 0;
-    const hours = Math.floor(minutes / 60);
-    const rest = minutes % 60;
-    return hours > 0 ? `${hours.toString().padStart(2, '0')}h ${rest.toString().padStart(2, '0')}m` : `${rest} min`;
-  }
-
   activeTypeTotal(type: VehicleType): number {
     return Number(this.dashboard?.activeByType.find((item) => item.vehicleType === type)?.total || 0);
   }
@@ -272,14 +263,20 @@ export class AppComponent implements OnInit {
     return record.id;
   }
 
-  private normalizePlate(plate: string): string {
-    return plate.trim().toUpperCase();
+  trackById(_: number, item: { id: number }): number {
+    return item.id;
   }
 
-  private toDateTimeLocal(value: string): string {
-    const date = new Date(value);
-    const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return offsetDate.toISOString().slice(0, 16);
+  trackByMenuId(_: number, item: { id: DashboardView }): DashboardView {
+    return item.id;
+  }
+
+  trackByRange(_: number, range: string): string {
+    return range;
+  }
+
+  trackByVehicleType(_: number, type: VehicleType): VehicleType {
+    return type;
   }
 
   private clearMessages(): void {

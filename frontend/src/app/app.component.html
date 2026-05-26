@@ -6,7 +6,7 @@
     </div>
 
     <nav class="nav">
-      <button *ngFor="let item of menu" type="button" [class.active]="activeView === item.id" (click)="setView(item.id)">
+      <button *ngFor="let item of menu; trackBy: trackByMenuId" type="button" [class.active]="activeView === item.id" (click)="setView(item.id)">
         <span>{{ item.marker }}</span>
         {{ item.label }}
       </button>
@@ -96,7 +96,7 @@
                 <button type="button" class="ghost" (click)="refreshData()">Actualizar</button>
               </div>
               <div class="bar-chart">
-                <div *ngFor="let range of rangeOrder" class="bar-item">
+                <div *ngFor="let range of rangeOrder; trackBy: trackByRange" class="bar-item">
                   <div class="bar-value">{{ rangeTotal(range) }}</div>
                   <div class="bar-track"><span [style.height]="rangeHeight(range)"></span></div>
                   <small>{{ range }}</small>
@@ -126,7 +126,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let record of dashboard.recentActive">
+                    <tr *ngFor="let record of dashboard.recentActive; trackBy: trackById">
                       <td><span class="plate">{{ record.plate }}</span></td>
                       <td>{{ record.vehicleType }}</td>
                       <td>{{ record.entryDateTime | date:'shortTime' }}</td>
@@ -165,7 +165,7 @@
           <form [formGroup]="entryForm" (ngSubmit)="registerEntry()">
             <label>Tipo de vehiculo
               <select formControlName="vehicleType">
-                <option *ngFor="let type of vehicleTypes" [value]="type">{{ type }}</option>
+                <option *ngFor="let type of vehicleTypes; trackBy: trackByVehicleType" [value]="type">{{ type }}</option>
               </select>
             </label>
             <label>Placa
@@ -219,7 +219,7 @@
           </label>
           <label>Tipo
             <select formControlName="vehicleType">
-              <option *ngFor="let type of vehicleTypes" [value]="type">{{ type }}</option>
+              <option *ngFor="let type of vehicleTypes; trackBy: trackByVehicleType" [value]="type">{{ type }}</option>
             </select>
           </label>
           <label>Fecha y hora de ingreso
