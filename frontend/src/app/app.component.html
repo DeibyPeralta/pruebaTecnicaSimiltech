@@ -1,0 +1,94 @@
+<main class="shell">
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Gestion de parqueadero</p>
+      <h1>Control de ingresos, salidas y cobro por minuto</h1>
+      <p>Registra carros y motos, consulta los vehiculos activos y calcula automaticamente el valor a pagar al salir.</p>
+    </div>
+    <div class="rate-card">
+      <span>Tarifa fija</span>
+      <strong>$50</strong>
+      <small>por minuto</small>
+    </div>
+  </section>
+
+  <section *ngIf="message" class="alert success">{{ message }}</section>
+  <section *ngIf="error" class="alert error">{{ error }}</section>
+
+  <section class="grid">
+    <article class="panel">
+      <h2>Registrar ingreso</h2>
+      <form [formGroup]="entryForm" (ngSubmit)="registerEntry()">
+        <label>
+          Tipo de vehiculo
+          <select formControlName="vehicleType">
+            <option *ngFor="let type of vehicleTypes" [value]="type">{{ type }}</option>
+          </select>
+        </label>
+        <label>
+          Placa
+          <input formControlName="plate" placeholder="ABC123" maxlength="10">
+        </label>
+        <label>
+          Fecha y hora de ingreso opcional
+          <input type="datetime-local" formControlName="entryDateTime">
+        </label>
+        <button type="submit" [disabled]="savingEntry">{{ savingEntry ? 'Registrando...' : 'Registrar ingreso' }}</button>
+      </form>
+    </article>
+
+    <article class="panel accent">
+      <h2>Registrar salida</h2>
+      <form [formGroup]="exitForm" (ngSubmit)="registerExit()">
+        <label>
+          Placa
+          <input formControlName="plate" placeholder="ABC123" maxlength="10">
+        </label>
+        <button type="submit" [disabled]="savingExit">{{ savingExit ? 'Calculando...' : 'Registrar salida' }}</button>
+      </form>
+
+      <div *ngIf="lastExit" class="summary">
+        <h3>Resumen de salida</h3>
+        <p><strong>Placa:</strong> {{ lastExit.plate }}</p>
+        <p><strong>Tipo:</strong> {{ lastExit.vehicleType }}</p>
+        <p><strong>Tiempo total:</strong> {{ lastExit.totalMinutes }} minutos</p>
+        <p><strong>Total a pagar:</strong> {{ formatMoney(lastExit.totalAmount) }}</p>
+        <p *ngIf="lastExit.email?.warning" class="warning">{{ lastExit.email?.warning }}</p>
+      </div>
+    </article>
+  </section>
+
+  <section class="panel list-panel">
+    <div class="list-header">
+      <div>
+        <h2>Vehiculos activos</h2>
+        <p>{{ activeRecords.length }} vehiculo(s) dentro del parqueadero</p>
+      </div>
+      <button type="button" class="secondary" (click)="loadActive()" [disabled]="loadingActive">Actualizar</button>
+    </div>
+
+    <div *ngIf="loadingActive" class="empty">Cargando vehiculos...</div>
+    <div *ngIf="!loadingActive && activeRecords.length === 0" class="empty">No hay vehiculos activos.</div>
+
+    <div *ngIf="!loadingActive && activeRecords.length > 0" class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Placa</th>
+            <th>Tipo</th>
+            <th>Ingreso</th>
+            <th>Accion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of activeRecords">
+            <td>{{ record.plate }}</td>
+            <td>{{ record.vehicleType }}</td>
+            <td>{{ record.entryDateTime | date:'short' }}</td>
+            <td><button type="button" class="small" (click)="registerExit(record.plate)" [disabled]="savingExit">Registrar salida</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>

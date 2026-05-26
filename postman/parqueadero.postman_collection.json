@@ -1,0 +1,53 @@
+{
+  "info": {
+    "name": "Parqueadero API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "plate", "value": "ABC123" },
+    { "key": "recordId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Registrar ingreso",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"vehicleType\": \"Carro\",\n  \"plate\": \"{{plate}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/parking/entries"
+      }
+    },
+    {
+      "name": "Listar activos",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/parking/active"
+      }
+    },
+    {
+      "name": "Registrar salida",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/parking/exits/{{plate}}"
+      }
+    },
+    {
+      "name": "Consultar registro",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/parking/records/{{recordId}}"
+      }
+    }
+  ]
+}
