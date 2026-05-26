@@ -1,94 +1,281 @@
-<main class="shell">
-  <section class="hero">
-    <div>
-      <p class="eyebrow">Gestion de parqueadero</p>
-      <h1>Control de ingresos, salidas y cobro por minuto</h1>
-      <p>Registra carros y motos, consulta los vehiculos activos y calcula automaticamente el valor a pagar al salir.</p>
+<main class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">P</div>
+      <span>Parqueadero</span>
     </div>
-    <div class="rate-card">
-      <span>Tarifa fija</span>
-      <strong>$50</strong>
-      <small>por minuto</small>
-    </div>
+
+    <nav class="nav">
+      <button *ngFor="let item of menu" type="button" [class.active]="activeView === item.id" (click)="setView(item.id)">
+        <span>{{ item.marker }}</span>
+        {{ item.label }}
+      </button>
+    </nav>
+
+    <button type="button" class="logout" (click)="logout()">
+      <span>C</span>
+      Cerrar sesion
+    </button>
+  </aside>
+
+  <section class="content">
+    <header class="topbar">
+      <div>
+        <p class="section-name">Gestion de Parqueadero</p>
+        <h1 *ngIf="activeView === 'dashboard'">Bienvenido, Administrador</h1>
+        <h1 *ngIf="activeView === 'ingresos'">Registrar ingresos</h1>
+        <h1 *ngIf="activeView === 'salidas'">Registrar salidas</h1>
+        <h1 *ngIf="activeView === 'vehiculos'">Vehiculos activos</h1>
+        <p class="muted">Resumen general de la actividad del parqueadero en tiempo real.</p>
+      </div>
+
+      <div class="user-card">
+        <span class="bell">!</span>
+        <span class="avatar">A</span>
+        <strong>Administrador</strong>
+      </div>
+    </header>
+
+    <section *ngIf="message" class="alert success">{{ message }}</section>
+    <section *ngIf="error" class="alert error">{{ error }}</section>
+
+    <ng-container [ngSwitch]="activeView">
+      <section *ngSwitchCase="'dashboard'" class="dashboard-view">
+        <div *ngIf="loadingDashboard && !dashboard" class="empty">Cargando dashboard...</div>
+
+        <ng-container *ngIf="dashboard">
+          <section class="kpi-grid">
+            <article class="kpi-card green">
+              <span>Vehiculos activos</span>
+              <strong>{{ dashboard.summary.activeVehicles }}</strong>
+              <small>En este momento</small>
+            </article>
+            <article class="kpi-card blue">
+              <span>Autos activos</span>
+              <strong>{{ dashboard.summary.activeCars }}</strong>
+              <small>{{ activeTypePercent('Carro') }}% del total</small>
+            </article>
+            <article class="kpi-card purple">
+              <span>Motos activas</span>
+              <strong>{{ dashboard.summary.activeMotorcycles }}</strong>
+              <small>{{ activeTypePercent('Moto') }}% del total</small>
+            </article>
+            <article class="kpi-card orange">
+              <span>Tiempo promedio</span>
+              <strong>{{ formatMinutes(dashboard.summary.averageActiveMinutes) }}</strong>
+              <small>Permanencia promedio</small>
+            </article>
+            <article class="kpi-card green">
+              <span>Ingresos del dia</span>
+              <strong>{{ formatMoney(dashboard.summary.revenueToday) }}</strong>
+              <small>{{ dashboard.summary.entriesToday }} entrada(s) hoy</small>
+            </article>
+          </section>
+
+          <section class="charts-grid">
+            <article class="panel chart-panel">
+              <h2>Autos vs Motos activos</h2>
+              <p class="muted">Distribucion de vehiculos activos</p>
+              <div class="donut-row">
+                <div class="donut" [style.background]="activeDonutGradient()">
+                  <div><strong>{{ dashboard.summary.activeVehicles }}</strong><span>Total</span></div>
+                </div>
+                <div class="legend">
+                  <p><span class="dot blue-dot"></span> Autos <strong>{{ activeTypeTotal('Carro') }} ({{ activeTypePercent('Carro') }}%)</strong></p>
+                  <p><span class="dot purple-dot"></span> Motos <strong>{{ activeTypeTotal('Moto') }} ({{ activeTypePercent('Moto') }}%)</strong></p>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel chart-panel wide">
+              <div class="panel-title">
+                <div>
+                  <h2>Tiempo de permanencia de vehiculos activos</h2>
+                  <p class="muted">Distribucion por rangos de tiempo</p>
+                </div>
+                <button type="button" class="ghost" (click)="refreshData()">Actualizar</button>
+              </div>
+              <div class="bar-chart">
+                <div *ngFor="let range of rangeOrder" class="bar-item">
+                  <div class="bar-value">{{ rangeTotal(range) }}</div>
+                  <div class="bar-track"><span [style.height]="rangeHeight(range)"></span></div>
+                  <small>{{ range }}</small>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section class="bottom-grid">
+            <article class="panel table-panel">
+              <div class="panel-title">
+                <div>
+                  <h2>Vehiculos activos</h2>
+                  <p class="muted">Mostrando {{ dashboard.recentActive.length }} de {{ dashboard.summary.activeVehicles }} vehiculo(s)</p>
+                </div>
+                <button type="button" class="ghost" (click)="setView('vehiculos')">Ver todos</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Placa</th>
+                      <th>Tipo</th>
+                      <th>Ingreso</th>
+                      <th>Tiempo</th>
+                      <th>Costo acumulado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let record of dashboard.recentActive">
+                      <td><span class="plate">{{ record.plate }}</span></td>
+                      <td>{{ record.vehicleType }}</td>
+                      <td>{{ record.entryDateTime | date:'shortTime' }}</td>
+                      <td><span class="pill">{{ formatMinutes(record.elapsedMinutes) }}</span></td>
+                      <td>{{ formatMoney(record.accumulatedAmount) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="panel chart-panel income-panel">
+              <h2>Ingresos resumen</h2>
+              <p class="muted">Ingresos por tipo de vehiculo</p>
+              <div class="donut-row compact">
+                <div class="donut small-donut" [style.background]="revenueDonutGradient()">
+                  <div><strong>{{ formatMoney(dashboard.summary.revenueToday) }}</strong><span>Total</span></div>
+                </div>
+                <div class="legend">
+                  <p><span class="dot blue-dot"></span> Autos <strong>{{ formatMoney(revenueByType('Carro').revenue) }}</strong></p>
+                  <p><span class="dot purple-dot"></span> Motos <strong>{{ formatMoney(revenueByType('Moto').revenue) }}</strong></p>
+                </div>
+              </div>
+              <div class="mini-kpis">
+                <div><span>Recaudo por minuto</span><strong>{{ formatMoney(dashboard.summary.tariffPerMinute) }}</strong><small>Tarifa actual</small></div>
+                <div><span>Proyeccion del dia</span><strong>{{ formatMoney(dashboard.summary.revenueToday + dashboard.summary.activeVehicles * dashboard.summary.tariffPerMinute * 30) }}</strong><small>Estimado al cierre</small></div>
+              </div>
+            </article>
+          </section>
+        </ng-container>
+      </section>
+
+      <section *ngSwitchCase="'ingresos'" class="work-grid">
+        <article class="panel form-panel">
+          <h2>Nuevo ingreso</h2>
+          <form [formGroup]="entryForm" (ngSubmit)="registerEntry()">
+            <label>Tipo de vehiculo
+              <select formControlName="vehicleType">
+                <option *ngFor="let type of vehicleTypes" [value]="type">{{ type }}</option>
+              </select>
+            </label>
+            <label>Placa
+              <input formControlName="plate" placeholder="ABC123" maxlength="10">
+            </label>
+            <label>Fecha y hora de ingreso opcional
+              <input type="datetime-local" formControlName="entryDateTime">
+            </label>
+            <button type="submit" [disabled]="savingEntry">{{ savingEntry ? 'Registrando...' : 'Registrar ingreso' }}</button>
+          </form>
+        </article>
+        <article class="panel help-panel">
+          <h2>Reglas de ingreso</h2>
+          <p>Solo se permiten carros y motos. La placa se normaliza en mayusculas y no puede tener otro ingreso activo.</p>
+        </article>
+      </section>
+
+      <section *ngSwitchCase="'salidas'" class="work-grid">
+        <article class="panel exit-launch-panel">
+          <h2>Registrar salida de vehiculo</h2>
+          <p class="muted">Abre una ventana flotante para calcular el pago, cerrar el registro activo y enviar la notificacion por correo.</p>
+          <button type="button" (click)="openExitModal()">Abrir registro de salida</button>
+        </article>
+        <article *ngIf="lastExit" class="panel result-panel">
+          <h2>Resumen de salida</h2>
+          <p><strong>Placa:</strong> {{ lastExit.plate }}</p>
+          <p><strong>Tipo:</strong> {{ lastExit.vehicleType }}</p>
+          <p><strong>Tiempo total:</strong> {{ lastExit.totalMinutes }} minutos</p>
+          <p><strong>Total a pagar:</strong> {{ formatMoney(lastExit.totalAmount) }}</p>
+          <p *ngIf="lastExit.email?.warning" class="warning">{{ lastExit.email?.warning }}</p>
+          <p *ngIf="lastExit.email?.sent" class="success-note">Correo enviado correctamente.</p>
+        </article>
+      </section>
+
+      <section *ngSwitchCase="'vehiculos'" class="panel table-panel full-panel">
+        <div class="panel-title">
+          <div>
+            <h2>Vehiculos activos</h2>
+            <p class="muted">{{ activeRecords.length }} vehiculo(s) dentro del parqueadero</p>
+          </div>
+          <button type="button" class="ghost" (click)="refreshData()" [disabled]="loadingActive">Actualizar</button>
+        </div>
+
+        <form *ngIf="editingRecord" class="edit-form" [formGroup]="editForm" (ngSubmit)="saveEdit()">
+          <div>
+            <h3>Editar vehiculo activo</h3>
+            <p class="muted">Corrige placa, tipo o fecha de ingreso antes de registrar la salida.</p>
+          </div>
+          <label>Placa
+            <input formControlName="plate" maxlength="10">
+          </label>
+          <label>Tipo
+            <select formControlName="vehicleType">
+              <option *ngFor="let type of vehicleTypes" [value]="type">{{ type }}</option>
+            </select>
+          </label>
+          <label>Fecha y hora de ingreso
+            <input type="datetime-local" formControlName="entryDateTime">
+          </label>
+          <div class="edit-actions">
+            <button type="submit" [disabled]="savingEdit">{{ savingEdit ? 'Guardando...' : 'Guardar cambios' }}</button>
+            <button type="button" class="ghost" (click)="cancelEdit()" [disabled]="savingEdit">Cancelar</button>
+          </div>
+        </form>
+
+        <div *ngIf="loadingActive" class="empty">Cargando vehiculos...</div>
+        <div *ngIf="!loadingActive && activeRecords.length === 0" class="empty">No hay vehiculos activos.</div>
+
+        <div *ngIf="!loadingActive && activeRecords.length > 0" class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Placa</th>
+                <th>Tipo</th>
+                <th>Ingreso</th>
+                <th>Tarifa</th>
+                <th>Accion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let record of activeRecords; trackBy: trackByRecordId">
+                <td><span class="plate">{{ record.plate }}</span></td>
+                <td>{{ record.vehicleType }}</td>
+                <td>{{ record.entryDateTime | date:'short' }}</td>
+                <td>{{ formatMoney(record.tariffPerMinute) }}/min</td>
+                <td class="row-actions">
+                  <button type="button" class="small ghost" (click)="startEdit(record)" [disabled]="savingEdit">Editar</button>
+                  <button type="button" class="small" (click)="openExitModal(record.plate)" [disabled]="savingExit">Registrar salida</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </ng-container>
   </section>
 
-  <section *ngIf="message" class="alert success">{{ message }}</section>
-  <section *ngIf="error" class="alert error">{{ error }}</section>
-
-  <section class="grid">
-    <article class="panel">
-      <h2>Registrar ingreso</h2>
-      <form [formGroup]="entryForm" (ngSubmit)="registerEntry()">
-        <label>
-          Tipo de vehiculo
-          <select formControlName="vehicleType">
-            <option *ngFor="let type of vehicleTypes" [value]="type">{{ type }}</option>
-          </select>
-        </label>
-        <label>
-          Placa
-          <input formControlName="plate" placeholder="ABC123" maxlength="10">
-        </label>
-        <label>
-          Fecha y hora de ingreso opcional
-          <input type="datetime-local" formControlName="entryDateTime">
-        </label>
-        <button type="submit" [disabled]="savingEntry">{{ savingEntry ? 'Registrando...' : 'Registrar ingreso' }}</button>
-      </form>
-    </article>
-
-    <article class="panel accent">
+  <section *ngIf="showExitModal" class="modal-backdrop" (click)="closeExitModal()">
+    <article class="exit-modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeExitModal()" aria-label="Cerrar ventana de salida">x</button>
+      <span class="modal-kicker">Salida de vehiculo</span>
       <h2>Registrar salida</h2>
+      <p>Ingresa la placa para calcular el tiempo total, valor a pagar y cerrar el registro activo.</p>
+
       <form [formGroup]="exitForm" (ngSubmit)="registerExit()">
-        <label>
-          Placa
-          <input formControlName="plate" placeholder="ABC123" maxlength="10">
+        <label>Placa
+          <input formControlName="plate" placeholder="ABC123" maxlength="10" autofocus>
         </label>
         <button type="submit" [disabled]="savingExit">{{ savingExit ? 'Calculando...' : 'Registrar salida' }}</button>
       </form>
-
-      <div *ngIf="lastExit" class="summary">
-        <h3>Resumen de salida</h3>
-        <p><strong>Placa:</strong> {{ lastExit.plate }}</p>
-        <p><strong>Tipo:</strong> {{ lastExit.vehicleType }}</p>
-        <p><strong>Tiempo total:</strong> {{ lastExit.totalMinutes }} minutos</p>
-        <p><strong>Total a pagar:</strong> {{ formatMoney(lastExit.totalAmount) }}</p>
-        <p *ngIf="lastExit.email?.warning" class="warning">{{ lastExit.email?.warning }}</p>
-      </div>
     </article>
-  </section>
-
-  <section class="panel list-panel">
-    <div class="list-header">
-      <div>
-        <h2>Vehiculos activos</h2>
-        <p>{{ activeRecords.length }} vehiculo(s) dentro del parqueadero</p>
-      </div>
-      <button type="button" class="secondary" (click)="loadActive()" [disabled]="loadingActive">Actualizar</button>
-    </div>
-
-    <div *ngIf="loadingActive" class="empty">Cargando vehiculos...</div>
-    <div *ngIf="!loadingActive && activeRecords.length === 0" class="empty">No hay vehiculos activos.</div>
-
-    <div *ngIf="!loadingActive && activeRecords.length > 0" class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Placa</th>
-            <th>Tipo</th>
-            <th>Ingreso</th>
-            <th>Accion</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let record of activeRecords">
-            <td>{{ record.plate }}</td>
-            <td>{{ record.vehicleType }}</td>
-            <td>{{ record.entryDateTime | date:'short' }}</td>
-            <td><button type="button" class="small" (click)="registerExit(record.plate)" [disabled]="savingExit">Registrar salida</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </section>
 </main>

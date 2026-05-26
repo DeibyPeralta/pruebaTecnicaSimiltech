@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { EntryRequest, ParkingRecord } from '../models/parking.models';
+import { DashboardData, EntryRequest, ParkingRecord, UpdateActiveRecordRequest } from '../models/parking.models';
 
 @Injectable({ providedIn: 'root' })
 export class ParkingService {
@@ -20,5 +20,13 @@ export class ParkingService {
 
   listActive(): Observable<ParkingRecord[]> {
     return this.http.get<ParkingRecord[]>(`${this.baseUrl}/active`);
+  }
+
+  updateActiveRecord(id: number, request: UpdateActiveRecordRequest): Observable<ParkingRecord> {
+    return this.http.put<ParkingRecord>(`${this.baseUrl}/records/${id}`, request);
+  }
+
+  getDashboard(): Observable<DashboardData> {
+    return this.http.get<DashboardData>(`${this.baseUrl}/dashboard`);
   }
 }

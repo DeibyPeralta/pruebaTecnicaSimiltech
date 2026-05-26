@@ -13,4 +13,11 @@ async function create(vehicle, connection = pool) {
   return { id: result.insertId, plate: vehicle.plate, vehicle_type: vehicle.vehicleType };
 }
 
-module.exports = { findByPlate, create };
+async function update(vehicle, connection = pool) {
+  await connection.execute(
+    'UPDATE vehicles SET plate = :plate, vehicle_type = :vehicleType WHERE id = :id',
+    vehicle
+  );
+}
+
+module.exports = { findByPlate, create, update };

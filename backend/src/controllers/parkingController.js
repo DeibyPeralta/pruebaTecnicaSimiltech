@@ -18,6 +18,15 @@ async function registerExit(req, res, next) {
   }
 }
 
+async function updateActiveRecord(req, res, next) {
+  try {
+    const record = await parkingService.updateActiveRecord(req.params.id, req.body);
+    return res.json(record);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function listActive(req, res, next) {
   try {
     const records = await parkingService.listActive();
@@ -36,4 +45,13 @@ async function getRecord(req, res, next) {
   }
 }
 
-module.exports = { registerEntry, registerExit, listActive, getRecord };
+async function getDashboard(req, res, next) {
+  try {
+    const dashboard = await parkingService.getDashboard();
+    return res.json(dashboard);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { registerEntry, registerExit, updateActiveRecord, listActive, getRecord, getDashboard };

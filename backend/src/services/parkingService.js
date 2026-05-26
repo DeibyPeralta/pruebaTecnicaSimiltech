@@ -96,6 +96,48 @@ async function registerExit(plateInput) {
   };
 }
 
+async function updateActiveRecord(id, data) {
+  const plate = normalizePlate(data.plate);
+  const entryDateTime = new Date(data.entryDateTime);
+
+  if (Number.isNaN(entryDateTime.getTime())) {
+    throw new AppError('La fecha de ingreso no es valida', 400);
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const activeRecord = await parkingRepository.findActiveById(id, connection);
+    if (!activeRecord) {
+      throw new AppError('No existe un registro activo para editar', 404);
+    }
+
+    const vehicleWithPlate = await vehicleRepository.findByPlate(plate, connection);
+    if (vehicleWithPlate && vehicleWithPlate.id !== activeRecord.vehicle_id) {
+      const duplicateActive = await parkingRepository.findActiveByVehicleId(vehicleWithPlate.id, connection);
+      if (duplicateActive) {
+        throw new AppError('La placa indicada ya tiene un ingreso activo', 409);
+      }
+      throw new AppError('La placa indicada ya esta registrada en otro vehiculo', 409);
+    }
+
+    await vehicleRepository.update(
+      { id: activeRecord.vehicle_id, plate, vehicleType: data.vehicleType },
+      connection
+    );
+
+    const record = await parkingRepository.updateEntryDateTime({ id, entryDateTime }, connection);
+    await connection.commit();
+    return record;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 async function listActive() {
   return parkingRepository.listActive();
 }
@@ -108,4 +150,8 @@ async function getRecord(id) {
   return record;
 }
 
-module.exports = { registerEntry, registerExit, listActive, getRecord };
+async function getDashboard() {
+  return parkingRepository.getDashboard();
+}
+
+module.exports = { registerEntry, registerExit, updateActiveRecord, listActive, getRecord, getDashboard };
