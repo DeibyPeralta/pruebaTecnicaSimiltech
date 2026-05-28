@@ -1,0 +1,23 @@
+<section class="work-grid">
+  <article class="panel form-panel">
+    <h2>Nuevo ingreso</h2>
+    <form [formGroup]="entryForm" (ngSubmit)="registerEntry()">
+      <label>Tipo de vehiculo
+        <select formControlName="vehicleType">
+          <option *ngFor="let type of vehicleTypes; trackBy: trackByVehicleType" [value]="type">{{ type }}</option>
+        </select>
+      </label>
+      <label>Placa
+        <input formControlName="plate" placeholder="ABC123" maxlength="10">
+      </label>
+      <label>Fecha y hora de ingreso opcional
+        <input type="datetime-local" formControlName="entryDateTime">
+      </label>
+      <button type="submit" [disabled]="savingEntry">{{ savingEntry ? 'Registrando...' : 'Registrar ingreso' }}</button>
+    </form>
+  </article>
+  <article class="panel help-panel">
+    <h2>Reglas de ingreso</h2>
+    <p>Solo se permiten carros y motos. La placa se normaliza en mayusculas y no puede tener otro ingreso activo.</p>
+  </article>
+</section>

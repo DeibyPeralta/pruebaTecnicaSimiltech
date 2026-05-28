@@ -1,0 +1,18 @@
+<aside class="sidebar">
+  <div class="brand">
+    <div class="logo">P</div>
+    <span>Parqueadero</span>
+  </div>
+
+  <nav class="nav">
+    <button *ngFor="let item of menu; trackBy: trackByMenuId" type="button" [class.active]="activeView === item.id" (click)="viewSelected.emit(item.id)">
+      <span>{{ item.marker }}</span>
+      {{ item.label }}
+    </button>
+  </nav>
+
+  <button type="button" class="logout" (click)="logout.emit()">
+    <span>C</span>
+    Cerrar sesion
+  </button>
+</aside>

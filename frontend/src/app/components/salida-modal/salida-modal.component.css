@@ -1,0 +1,86 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(6, 22, 18, .48);
+  backdrop-filter: blur(6px);
+}
+
+.exit-modal {
+  position: relative;
+  width: min(520px, 100%);
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 28px;
+  padding: 30px;
+  color: white;
+  background: radial-gradient(circle at top right, rgba(0, 156, 114, .45), transparent 38%), linear-gradient(135deg, #003f35, #00684f);
+  box-shadow: 0 32px 90px rgba(0, 30, 24, .38);
+}
+
+.exit-modal h2 {
+  margin-bottom: 8px;
+  font-size: 2rem;
+}
+
+.exit-modal p {
+  margin-bottom: 22px;
+  color: rgba(255, 255, 255, .78);
+  line-height: 1.6;
+}
+
+.exit-modal label {
+  color: white;
+}
+
+.exit-modal input {
+  border: 2px solid rgba(255, 255, 255, .24);
+  padding: 16px 18px;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.exit-modal form button {
+  margin-top: 6px;
+  padding: 16px 20px;
+  background: #008764;
+}
+
+.modal-kicker {
+  display: inline-flex;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  padding: 6px 12px;
+  color: #003f35;
+  background: #d9f7eb;
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: white;
+  background: rgba(255, 255, 255, .14);
+  font-size: 1.1rem;
+}
+
+@media (max-width: 520px) {
+  .modal-backdrop {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .exit-modal {
+    border-radius: 24px;
+    padding: 24px 18px;
+  }
+}

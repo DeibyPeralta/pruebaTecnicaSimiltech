@@ -1,0 +1,15 @@
+<section *ngIf="open" class="modal-backdrop" (click)="close()">
+  <article class="exit-modal" (click)="$event.stopPropagation()">
+    <button type="button" class="modal-close" (click)="close()" aria-label="Cerrar ventana de salida">x</button>
+    <span class="modal-kicker">Salida de vehiculo</span>
+    <h2>Registrar salida</h2>
+    <p>Ingresa la placa para calcular el tiempo total, valor a pagar y cerrar el registro activo.</p>
+
+    <form [formGroup]="exitForm" (ngSubmit)="registerExit()">
+      <label>Placa
+        <input formControlName="plate" placeholder="ABC123" maxlength="10" autofocus>
+      </label>
+      <button type="submit" [disabled]="savingExit">{{ savingExit ? 'Calculando...' : 'Registrar salida' }}</button>
+    </form>
+  </article>
+</section>

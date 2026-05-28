@@ -1,0 +1,16 @@
+<section class="work-grid">
+  <article class="panel exit-launch-panel">
+    <h2>Registrar salida de vehiculo</h2>
+    <p class="muted">Abre una ventana flotante para calcular el pago, cerrar el registro activo y enviar la notificacion por correo.</p>
+    <button type="button" (click)="openExitModal.emit()">Abrir registro de salida</button>
+  </article>
+  <article *ngIf="lastExit" class="panel result-panel">
+    <h2>Resumen de salida</h2>
+    <p><strong>Placa:</strong> {{ lastExit.plate }}</p>
+    <p><strong>Tipo:</strong> {{ lastExit.vehicleType }}</p>
+    <p><strong>Tiempo total:</strong> {{ lastExit.totalMinutes }} minutos</p>
+    <p><strong>Total a pagar:</strong> {{ formatMoney(lastExit.totalAmount) }}</p>
+    <p *ngIf="lastExit.email?.warning" class="warning">{{ lastExit.email?.warning }}</p>
+    <p *ngIf="lastExit.email?.sent" class="success-note">Correo enviado correctamente.</p>
+  </article>
+</section>

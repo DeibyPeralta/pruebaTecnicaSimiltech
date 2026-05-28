@@ -1,0 +1,3 @@
+.work-grid { display: grid; grid-template-columns: minmax(320px, 520px) 1fr; gap: 22px; margin-bottom: 22px; }
+.help-panel p { color: #475467; line-height: 1.7; }
+@media (max-width: 1180px) { .work-grid { grid-template-columns: 1fr; } }

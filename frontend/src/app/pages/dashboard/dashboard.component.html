@@ -1,0 +1,80 @@
+<section class="dashboard-view">
+  <div *ngIf="loadingDashboard && !dashboard" class="empty">Cargando dashboard...</div>
+
+  <ng-container *ngIf="dashboard">
+    <section class="kpi-grid">
+      <article class="kpi-card green"><span>Vehiculos activos</span><strong>{{ dashboard.summary.activeVehicles }}</strong><small>En este momento</small></article>
+      <article class="kpi-card blue"><span>Autos activos</span><strong>{{ dashboard.summary.activeCars }}</strong><small>{{ activeTypePercent('Carro') }}% del total</small></article>
+      <article class="kpi-card purple"><span>Motos activas</span><strong>{{ dashboard.summary.activeMotorcycles }}</strong><small>{{ activeTypePercent('Moto') }}% del total</small></article>
+      <article class="kpi-card orange"><span>Tiempo promedio</span><strong>{{ formatMinutes(dashboard.summary.averageActiveMinutes) }}</strong><small>Permanencia promedio</small></article>
+      <article class="kpi-card green"><span>Ingresos del dia</span><strong>{{ formatMoney(dashboard.summary.revenueToday) }}</strong><small>{{ dashboard.summary.entriesToday }} entrada(s) hoy</small></article>
+    </section>
+
+    <section class="charts-grid">
+      <article class="panel chart-panel">
+        <h2>Autos vs Motos activos</h2>
+        <p class="muted">Distribucion de vehiculos activos</p>
+        <div class="donut-row">
+          <div class="donut" [style.background]="activeDonutGradient()"><div><strong>{{ dashboard.summary.activeVehicles }}</strong><span>Total</span></div></div>
+          <div class="legend">
+            <p><span class="dot blue-dot"></span> Autos <strong>{{ activeTypeTotal('Carro') }} ({{ activeTypePercent('Carro') }}%)</strong></p>
+            <p><span class="dot purple-dot"></span> Motos <strong>{{ activeTypeTotal('Moto') }} ({{ activeTypePercent('Moto') }}%)</strong></p>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel chart-panel wide">
+        <div class="panel-title">
+          <div><h2>Tiempo de permanencia de vehiculos activos</h2><p class="muted">Distribucion por rangos de tiempo</p></div>
+          <button type="button" class="ghost" (click)="loadDashboard()">Actualizar</button>
+        </div>
+        <div class="bar-chart">
+          <div *ngFor="let range of rangeOrder; trackBy: trackByRange" class="bar-item">
+            <div class="bar-value">{{ rangeTotal(range) }}</div>
+            <div class="bar-track"><span [style.height]="rangeHeight(range)"></span></div>
+            <small>{{ range }}</small>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="panel table-panel">
+        <div class="panel-title">
+          <div><h2>Vehiculos activos</h2><p class="muted">Mostrando {{ dashboard.recentActive.length }} de {{ dashboard.summary.activeVehicles }} vehiculo(s)</p></div>
+          <button type="button" class="ghost" (click)="viewSelected.emit('vehiculos')">Ver todos</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Placa</th><th>Tipo</th><th>Ingreso</th><th>Tiempo</th><th>Costo acumulado</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let record of dashboard.recentActive; trackBy: trackById">
+                <td><span class="plate">{{ record.plate }}</span></td>
+                <td>{{ record.vehicleType }}</td>
+                <td>{{ record.entryDateTime | date:'shortTime' }}</td>
+                <td><span class="pill">{{ formatMinutes(record.elapsedMinutes) }}</span></td>
+                <td>{{ formatMoney(record.accumulatedAmount) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="panel chart-panel income-panel">
+        <h2>Ingresos resumen</h2>
+        <p class="muted">Ingresos por tipo de vehiculo</p>
+        <div class="donut-row compact">
+          <div class="donut small-donut" [style.background]="revenueDonutGradient()"><div><strong>{{ formatMoney(dashboard.summary.revenueToday) }}</strong><span>Total</span></div></div>
+          <div class="legend">
+            <p><span class="dot blue-dot"></span> Autos <strong>{{ formatMoney(revenueByType('Carro').revenue) }}</strong></p>
+            <p><span class="dot purple-dot"></span> Motos <strong>{{ formatMoney(revenueByType('Moto').revenue) }}</strong></p>
+          </div>
+        </div>
+        <div class="mini-kpis">
+          <div><span>Recaudo por minuto</span><strong>{{ formatMoney(dashboard.summary.tariffPerMinute) }}</strong><small>Tarifa actual</small></div>
+          <div><span>Proyeccion del dia</span><strong>{{ formatMoney(dashboard.summary.revenueToday + dashboard.summary.activeVehicles * dashboard.summary.tariffPerMinute * 30) }}</strong><small>Estimado al cierre</small></div>
+        </div>
+      </article>
+    </section>
+  </ng-container>
+</section>

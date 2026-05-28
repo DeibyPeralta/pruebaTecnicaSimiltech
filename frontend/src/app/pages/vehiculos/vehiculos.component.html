@@ -1,0 +1,52 @@
+<section class="panel table-panel full-panel">
+  <div class="panel-title">
+    <div>
+      <h2>Vehiculos activos</h2>
+      <p class="muted">{{ activeRecords.length }} vehiculo(s) dentro del parqueadero</p>
+    </div>
+    <button type="button" class="ghost" (click)="loadActive()" [disabled]="loadingActive">Actualizar</button>
+  </div>
+
+  <form *ngIf="editingRecord" class="edit-form" [formGroup]="editForm" (ngSubmit)="saveEdit()">
+    <div>
+      <h3>Editar vehiculo activo</h3>
+      <p class="muted">Corrige placa, tipo o fecha de ingreso antes de registrar la salida.</p>
+    </div>
+    <label>Placa
+      <input formControlName="plate" maxlength="10">
+    </label>
+    <label>Tipo
+      <select formControlName="vehicleType">
+        <option *ngFor="let type of vehicleTypes; trackBy: trackByVehicleType" [value]="type">{{ type }}</option>
+      </select>
+    </label>
+    <label>Fecha y hora de ingreso
+      <input type="datetime-local" formControlName="entryDateTime">
+    </label>
+    <div class="edit-actions">
+      <button type="submit" [disabled]="savingEdit">{{ savingEdit ? 'Guardando...' : 'Guardar cambios' }}</button>
+      <button type="button" class="ghost" (click)="cancelEdit()" [disabled]="savingEdit">Cancelar</button>
+    </div>
+  </form>
+
+  <div *ngIf="loadingActive" class="empty">Cargando vehiculos...</div>
+  <div *ngIf="!loadingActive && activeRecords.length === 0" class="empty">No hay vehiculos activos.</div>
+
+  <div *ngIf="!loadingActive && activeRecords.length > 0" class="table-wrap">
+    <table>
+      <thead><tr><th>Placa</th><th>Tipo</th><th>Ingreso</th><th>Tarifa</th><th>Accion</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let record of activeRecords; trackBy: trackByRecordId">
+          <td><span class="plate">{{ record.plate }}</span></td>
+          <td>{{ record.vehicleType }}</td>
+          <td>{{ record.entryDateTime | date:'short' }}</td>
+          <td>{{ formatMoney(record.tariffPerMinute) }}/min</td>
+          <td class="row-actions">
+            <button type="button" class="small ghost" (click)="startEdit(record)" [disabled]="savingEdit">Editar</button>
+            <button type="button" class="small" (click)="exitRequested.emit(record.plate)">Registrar salida</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
